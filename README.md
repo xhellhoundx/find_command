@@ -44,7 +44,7 @@ Este repositorio forma parte de mis herramientas automatización
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/xhellhoundx/find_command
+git clone https://github.com/xhellhoundx/find_command.git
 cd find_comands
 
 # Dar permisos de ejecución
