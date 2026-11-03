@@ -147,6 +147,7 @@
     -v, --verbose # Modo verbose.
     -w, --write-out <FORMAT>  # Hace que curl muestre la información de la respuesta, ver mejor con ayuda. "-w '%{http_code}\n'"
     --path-as-is  # Sirve para enviar la ruta de la URL exactamente como la escribes, evitando que curl normalice o limpie los segmentos de punto (/./ o /../) antes de realizar la petición.
+    --data-urlencode  # Envía datos en una petición POST (igual que -d), pero codifica automáticamente el contenido para que sea válido en una URL (por ejemplo, convierte espacios en %20, & en %26, etc.), evitando que caracteres especiales rompan la petición.
 
 
 - tool: sed
@@ -672,6 +673,22 @@
   description: "Herramienta integrada en el sistema para múltiples funcionalidades, principalmente filtrado de palabras y expresiones"
   command: |
     cat archivo.txt | awk '{for(i=1; i<=NF; i++) if(length($i) > 5) print $i} # Ayuda a filtrar por longitud de caracteres
+    -F'[SEP]' # Flag SEPARADOR de campos
+    NR==X # Imprime línea X (se usa antes del código)
+
+
+
+- tool: convert
+  category: utility
+  tags: [convert, images]
+  description: "Convierte formatos de imagenes y cambia el tamaño, desenfocar, recortar y otras funcionalidades"
+  command: |
+    convert -size [BxH] xc:[color] name.[FORMAT] # Crear una imagen del formato deseado.
+    -size [BxH] # Dimensiones de la imágen, va antes de la fuente. Ejemplo: 800x600
+    xc:[color]  # Pseudo formato "canvas" (x constant color); acepta nombres (red), hex ('[hashtag]1e1e1e'), rgb(10,20,30)
+    name.[format] # Elije nombre y formato para la imagen (acepta múltiples tipos de formato multimedia)
+    convert file.png file.jpg # Convertir formatos de archivos multimedia
+
 
 - tool: docker
   category: utility
