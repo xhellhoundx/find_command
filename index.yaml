@@ -47,6 +47,15 @@
     nc -lp <PORT> > file.ext # Recibir un archivo mediante redes
     tar czfv - /ruta/del/archivo | nc <IP> <PORT> # Comprimir un archivo y enviarlo
     nc -lp <PORT> | tar xzvf -  # Recibir un archivo y descomprimir
+    Algunos flag útiles:  #
+    -l  # Pone netcat en modo escucha para aceptar conexiones entrantes (servidor)
+    -u  # (UDP) Utiliza protocolo UDP en lugar de TCP (por defecto)
+    -p  # (Source Port) Especifica el puerto local desde el que se realiza la conexión o escucha
+    -k  # (Keep Alive) Mantiene el servidor escuchando activamente tras cerrarse una conexión
+    -v  # (Verbose) Muestra información detallada sobre la conexión (útil para ver IPs y puertos de origen). Puede duplicarse (-vv) para mayor nivel de detalle
+    -z  # (Zero-I/O / Scan mode) Modo sin entrada/salida de datos. Se utiliza junto con '-v' para escaneo de puertos
+    -e  # (Execute) Ejecuta un programa o shell al establecerse la conexión (ej. /bin/bash).
+    -w  # (Timeout) Establece un tiempo límite de espera en segundos para las conexiones inactivas antes de cerrar el socket
 
 
 - tool: wget
@@ -91,6 +100,38 @@
     --post-data=string  # Usa post como método para las solicitudes, envia texto
     --header=header-line  # Asigna un header a la solicitud HTTP o cualquier otra
 
+
+- tool: ip
+  category: system
+  tags: [network, ip, broadcast, gateway, routing, interfaces, tunnels]
+  description: "Muestra y manipula rutas (enrutamiento), dispositivos de red, interfaces y túneles"
+  command: |
+    ip [options] OBJECT {command | help}  # Sintaxis básica
+    Opciones útiles: #
+    address, addr, a  # Protocolo de dirección en un dispositivo
+    link, l # Dispositivo de red
+    route, r  # Tabla de enrutamiento
+    neighbour, neigh, n # Gestiona el protocolo ARP
+    Algunos comandos: #
+    ip [address, addr, a] show  # Lista todas las direcciones
+    ip [addres, addr, a]  # Exactamente lo mismo que 'ip address show'
+    ip [address, addr, a] show [NOMBRE] # Muestra especificaciones de ese dispositivo
+    ip [neighbour, neigh, n] show # Muestra la tabla de vecinos del kernel (tabla ARP)
+    ip [neighbour, neigh, n] show dev [interfaz]  # Muestra únicamente los vecinos de esa interfaz
+    ip [route, r] list  # Muestra la tabla de enrutamiento actual
+    ip [route, r] get <IP>  # Consulta la ruta exacta que tomará el kernel para enviar un paquete a una dirección IP
+    ip [route, r] list table all  # Muestra todas las rutas de red configuradas en todas las tablas de enrutamiento disponibles del sistema operativo
+    ip [link, l] show # Gestionar, configurar y ver el estado de las interfaces de red a nivel de la capa de enlace de datos. Opera directamente sobre las tarejas de red físicas, virtuales puentes (bridge) y túneles
+    ip [link, l]  # Exactamente lo mismo que 'ip link show'
+    ip [link, l] set <interfaz> up  # Activa o enciende una interfaz de red (suele usarse con 'sudo'). NOTA: Levantar (conectarse) a una tarjeta de red, es casi lo mismo que conectarse a la red pero se hace a nivel del kernel
+    ip [link, l] set <interfaz> down  # Desactivar o apagar una interfaz de red (suele usarse con 'sudo'). NOTA: Deshabiltar (desconectarse) de una tarjeta de red, es casi lo mismo que desconectarse de la red pero se hace a nivel de kernel
+    ip [link, l] set <infertaz> address [MAC] # Cambiar la dirección MAC (suele usarse con 'sudo'). NOTAS: La tarjeta de red debe estar apagada para cambiar la dirección MAC; no debe devolver errores al cambiar la dirección MAC.
+    ip -d [link, l] show <interfaz>  # Se puede observar la MAC anterior para configurar de nuevo
+    Algunos flags: #
+    -brief, -br # Imprime solo la información básica para mejor legibilidad.
+    -o  # 'Oneline'. Imprime cada registro en una sola línea.
+
+
 - tool: curl
   category: utility
   tags: [download, upload, recon, enumeration, exfiltration, fuzzing, proxy]
@@ -100,7 +141,7 @@
     --compressed-ssh  # Exclusivamente para protocolo FTP y SFTP. Solicita al servidor SSH que comprima la información antes de enviarla a través de la red usando el algoritmo de compresión integrado de SSH (usualmente zlib), es útil en conexiones lentas ya que reduce significativamente el tiempo de transferencias si se está cargando/descargando archivos, también en archivos de texto o sin comprimir como código fuente, logs o bases de datos SQL ya que estos formatos se comprimen muy bien.
     --compressed  # Exclusivamente para protocolo HTTP y HTTPS. Solicita al servidor que envíe la respuesta comprimida o descomprimida según sea el caso usando algoritmos como gzip, deflate, br o zstd para ahorrar ancho de banda y acelerar la descarga. Este flag añadirá el header "Accept-Encoding" a la petición y también si el servidor responde con "Content-Encoding" curl lo descomprime antes de guardarlo o mostrarlo.
     -K FILE, --config FILE  # Sirve para cargar documentos, opciones y URLs desde un archivo de configuración en lugar de escribirlos en la CL. Es particularmente útil cuando tienes peticiones muy largas con muchas cabeceras (-H), cookies o credenciales que se quieren reutilizar o mantener ordenadas. Debe usar la par "clave-valor" como cabeceras normales: url = "https://ejemplo.com/data", header = "Accept: application/json", user-agent = "useragent/1.0", cada parámetro va separado por un salto de línea (\n)
-    -connect-timeout NUM  # Tiempo máximo en segundos que se permite a una conexión curl, puede aceptar valores decimales en NUM separado por puntos (.)
+    --connect-timeout NUM  # Tiempo máximo en segundos que se permite a una conexión curl, puede aceptar valores decimales en NUM separado por puntos (.)
     -c FILE, --cookie-jar FILE  # Especifica en que archivo quieres que curl guarde las cookies después de completar la operacion. Este flag sólo sirve como output una vez recibida la respuesta del servidor-
     -b DATA, --cookie DATA  # Pasa "DATA" como cookie a la solicitud del servidor. DATA también puede ser un archivo donde están almacenadas las cookies, si se usa en conjunto con el flag "-c, --cookie-jar" las nuevas cookies devueltas por el servidor serán almacenadas en el archivo especificado. Este flag sirve para leer/recibir cookies no para almacenar.
     --create-dirs # Se usa en cojunto con el flag "-o, --output", por defecto si se pide a curl que guarde un archivo en una ruta con carpetas que aún no existen este fallará y arrojará un error.
@@ -489,14 +530,15 @@
   tags: [fuzzing, enumeration, web]
   description: "Fuzzer web rápido escrito en Go diseñado para el descubrimiento de elementos mediante sustitución de palabras clave."
   command: |
-    ffuf -w /ruta/wordlist.txt -u http://target/FUZZ
-    ffuf -w /rota/wordlist.txt -u http://target?FUZZ=comando
+    ffuf -w /ruta/wordlist.txt -u http://target/FUZZ  #
+    ffuf -w /ruta/wordlist.txt -u http://target?FUZZ=comando #
     -u  # URL
     -H <Header: Valor>  # Inyectar o modificar cabeceras personalizadas
     -fs [size]  # Filtrar y ocultar respuestas por longitud exacta de bytes
     -fc [code]  # Filtrar y ocultar respuestas por códigos de estado HTTP
     -mc [status]  # Filtrar por status code
     -w -  # Wordlist | si se usa el guión tomará el pipe del comando anterior
+    -w worlist.ext:FUZZ # Acepta múltiples parámetros luego de la extensión que podemos asignar en donde queremos hacer fuzzing
     -d  # Datos de solicitud POST (form)
     -r  # Sigue redirecciones
 
@@ -651,6 +693,11 @@
     openssl también se compone de otros comandos dependiendo de los certificados:
     openssl-x509  # Se puede ver el manual
     openssl x509 -in certificado.pem -text -out certificado.txt # Convierte el certificado en un string
+    Generando llaves y certificados: #
+    openssl genpkey -algorithm RSA -out file.key -aes256  # Genera una clave privada RSA y la clave será cifrada en AES256 (se guarda en un archivo 'file'; ver 'man openssl', 'man openssl-genpkey')
+    openssl req -new -key file.key -out file.csr  # Crea una nueva "Solicitud de Firma de Certificado (CSR)". La CSR es necesaria para solicitar un certificado digital a una autoridad certificadora (CA) (ver 'man openssl', 'man openssl-req')
+    openssl x509 -req -days 365 -in server.csr -signkey server-key.key -out server-cert.pem # Genera un certificado autofirmado basado en la CSR (ver 'man openssl', 'man openssl-x509')
+    openssl rsa -in file.key -out file.key  # Quita la contraseña de una clave privada RSA protegida. Al ejecutar este comando se solicita la contraseña actual de la clave privada. Una vez proporcionada OpenSSL generará una versión sin cifrar de la clave privada y la guardará en el mismo archivo, sobreescribiendo la versión cifrada. (ver 'man openssl', 'man openssl-rsa')
 
 
 - tool: grep
@@ -806,6 +853,13 @@
   command: |
     sudo mount -t nfs <IP>:/found/path /dir/to/mount  # Enlazar la carpeta remota (localizada previamente con showmount)
 
+- tool: umount
+  category: system
+  tags: [nfs, storage, network-file-system]
+  description: "Comando del sistema operativo para desacoplar de forma local estructuras de archivos previmante acopladas con mount"
+  command: |
+    sudo umount /dir/to/
+
 - tool: redis-cli
   category: database
   tags: [redis, key-value, memory-db]
@@ -819,7 +873,7 @@
     TYPE [key]  # Validar la tipología del valor de la clave analizada
     GET [key] # Extraer de forma directa el valor almacenado en una "key" string
     MGET [key1, keyN...]  # Extraer de forma directa el valor de múltiples "key" string
-    LRANGE [key]  # Listar listas
+    LRANGE [key] [i] [n]  # Listar listas. 'i' y 'n' representan las líneas que queremos listar, todo el contenido entre ellas se mostrará
 
 - tool: extra
   category: extra
