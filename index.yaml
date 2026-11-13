@@ -37,6 +37,42 @@
     python3 -c 'import zlib, sys; sys.stdout.buffer.write(<lib.decompress(open(sys.argv[1], "rb").read()))' # Descomprimir un archivo ZLIB y volcarlo a un binario de salida
 
 
+- tool: lsattr
+  category: system
+  tags: [attributes, permissions]
+  description: "Lista los atributos de archivos en el sistema de archivos. Provee una capa extra de protección"
+  command: |
+    lsattr [DIR | FILE] #
+
+
+
+- tool: chattr
+  category: system
+  tags: [attributes, permissions]
+  description: "Cambia los atributos de archivos en el sistema de archivos. Provee una capa extra de protección"
+  command: |
+    chattr [options] [+-= attributes] [FILE] #
+    Operadores: #
+    + # Añade atributos
+    - # Remueve atributos
+    = # Asigna el atributo exacto
+    Opciones comunes: #
+    -R  # Cambia atributos de forma recursiva
+    -V  # Salida "verbose"
+    -f  # Suprime los mensajes de error
+    Atributos: #
+    a # "append-only". Solo podrán ser abiertos en modo "append" (solo añadir contenido), esto previene la modificación del contenido existente
+    A # "no-atime-updates". Indica que no se actualiza la marca de tiempo de accesco (atime) del archivo. El sistema no modifica el registro del último acceso del archivo cada vez que se lee, lo que reduce las operaciones I/O en disco y puede mejorar el rendimiento.
+    c # "compressed". Indica que un archivo debe ser comprimido automáticamente por el kernel del sistema operativo.
+    d # "no-dump". Indica que el archivo no debe ser candidato para copia de seguridad cuando se ejecuta el programa 'dump'
+    i # "inmutable". Los archivos con este atributo no pueden ser modificados, eliminados, renombrados o enlazados (symlink). Incluso el usuario root no podrá modificar los archivos sin remover primero el atributo
+    j # "journal-data". Activa el registro  de datos (data journalling) para un archivo específico. Cuando se aplica, todas las escritouras de datos del archivo se realizan primero en el 'journal' del sistema de archivos. Esta función es particularmente útil cuando el sistema de archivos está montado con las opciones 'data=ordered' o 'data=writeback' ya que garantiza que los datos estén registrados antes de su persistencia final.
+    s # "secure-deletion". Sirve para asegurar la eliminación segura de un archivo. Cuando un archivo con este atributo es borrado el sistema operativo sobreescribe automáticamente sus bloques de datos con ceros antes de eliminar la entrada del directorio. Este mecanismo impide que los datos puedan ser recuperados mediante herramientas de recuperación de archivos.
+    S # "synchronous-updates". Indica actualizaciones síncronas. Los cambios realizados en el archivo se escriben sincrónicamente en el disco duro inmediatamente, en lugar de esperar a que el sistema operativo gestione los buffers de escrituras.
+    u # "undeletable". al eliminar un archivo, sus contenidos se guardan en el disco para permitir su futura recuperación con herramientas especializadas.
+
+
+
 - tool: nc
   category: network
   tags: [listener, shell, exploitation]
@@ -129,6 +165,7 @@
     ip -d [link, l] show <interfaz>  # Se puede observar la MAC anterior para configurar de nuevo
     Algunos flags: #
     -brief, -br # Imprime solo la información básica para mejor legibilidad.
+    -details, -d # Muestra información detallada
     -o  # 'Oneline'. Imprime cada registro en una sola línea.
 
 
@@ -350,7 +387,7 @@
     -A  # Imprime cada paquetes (menos su header de enlace) en ASCII, útil para capturar páginas web.
     -c NUM  # Sale después de contar NUM packets.
     -D, --list-interfaces # Lista las interfaces de red disponibles.
-    -e  # Imprime el nivel de enlace de la cabecera en cada linea.
+    -e  # Imprime el nivel de enlace de la cabecera en cada linea, por ejemplo, imprime las direcciones MAC en protocols ARP
     -i INTERFACE, --interface=INTERFACE # Escucha la interfaz asignada en INTERFACE
     -I, --monitor-mode  # Modo monitor. Configura la tarjeta Wi-Fi en modo escucha pasiva para capturar todo el tráfico que viaja por el aire en ese canal, sin importar a qué dispositivo pertenece.
     --inmediate-mode  # Los paquetes son impresos una vez recibidos, no se almacenarán en búfer, útil cuando queremos imprimir todo directo en la terminal y no almacenar en un archivo.
